@@ -1,0 +1,16 @@
+{
+  "name": "cuisinebot-europnet",
+  "version": "1.0.0",
+  "description": "Bot IRC défis cuisine — EuropNet #cuisine",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "irc-framework": "^4.3.0",
+    "node-cron": "^3.0.3"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
