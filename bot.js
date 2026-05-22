@@ -14,11 +14,14 @@ const path  = require('path');
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 const CONFIG = {
-  host:         'irc.europnet.org',  // à adapter
-  port:         6667,
+  host:         'irc.europnet.org',
+  port:         6697,
+  ssl:          true,                // connexion SSL
   nick:         'BOTteDePersil',
   username:     'botteDePersil',
   realname:     'BOTteDePersil — Défis Cuisine EuropNet',
+  account:      'BOTteDePersil',     // ⬅️ pseudo enregistré sur NickServ
+  password:     'MOT_DE_PASSE',      // ⬅️ mot de passe NickServ du bot
   channel:      '#cuisine',
   founderLevel: 500,
   dataFile:     path.join(__dirname, 'data.json'),
@@ -281,10 +284,13 @@ const client = new IRC.Client();
 client.connect({
   host: CONFIG.host, port: CONFIG.port,
   nick: CONFIG.nick, username: CONFIG.username, realname: CONFIG.realname,
+  account: { account: CONFIG.account, password: CONFIG.password },
+  ssl: CONFIG.ssl
 });
 
 client.on('registered', () => {
   console.log(`[BOTteDePersil] Connecté en tant que ${CONFIG.nick}`);
+  // L'authentification SASL est gérée automatiquement à la connexion
   client.join(CONFIG.channel);
 });
 
