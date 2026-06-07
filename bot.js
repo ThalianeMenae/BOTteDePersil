@@ -661,11 +661,10 @@ client.on('message', async (event) => {
   // ── !liendefi <url> ───────────────────────────────────────────────────────
   if (msg.startsWith('!liendefi ')) {
     const url = msg.slice(10).trim();
-    // Vérifier que l'expéditeur est Electr0nLibre ou un founder
+    // Vérifier que l'expéditeur est un founder
     const isFounder = await checkFounder(client, nick, CONFIG.channel);
-    const isElectr0n = nick.toLowerCase() === 'electr0nlibre';
-    if (!isFounder && !isElectr0n) {
-      say(`${nick} : commande réservée à Electr0nLibre et aux founders du salon.`);
+    if (!isFounder) {
+      say(`${nick} : commande réservée aux founders du salon.`);
       return;
     }
     if (!/^https?:\/\/.+/.test(url)) {
@@ -805,7 +804,7 @@ client.on('message', async (event) => {
     pm('!rappel                → Rappel des dates du défi en cours');
     pm('!clore                 → Clôturer les participations [founder]');
     pm('!annuler [raison]      → Annuler le défi en cours [founder]');
-    pm('!liendefi <url>        → Définir la galerie photos du défi [founder / Electr0nLibre]');
+    pm('!liendefi <url>        → Définir la galerie photos du défi [founder]');
     pm('— FANTAISIE —');
     pm('!philippe [pseudo]     → Philippe Etchebest donne son avis (sans filtre)');
     pm('!michelin [pseudo]     → Le Guide Michelin attribue ses étoiles');
