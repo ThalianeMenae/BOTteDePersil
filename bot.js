@@ -23,7 +23,7 @@ const CONFIG = {
   account:      'BOTteDePersil',     // ⬅️ pseudo enregistré sur NickServ
   password:     'MOT_DE_PASSE',      // ⬅️ mot de passe NickServ du bot
   channel:      '#cuisine',
-  founderLevel: 500,
+  founderLevel: 500, // niveau minimum pour lancer un défi (Coquelicot=500, Thaliane=9999)
   dataFile:     path.join(__dirname, 'data.json'),
 };
 
@@ -423,11 +423,13 @@ client.on('notice', (event) => {
   const msg = event.message;
   for (const [key, entry] of pendingAccessChecks.entries()) {
     const { resolve, nick, channel } = entry;
-    const mA = msg.match(/^(\S+)\s+has\s+access\s+level\s+(\d+)\s+on\s+(\S+)/i);
-    if (mA && mA[1].toLowerCase() === nick.toLowerCase() && mA[3].toLowerCase() === channel.toLowerCase()) {
-      pendingAccessChecks.delete(key); resolve(parseInt(mA[2]) >= CONFIG.founderLevel); return;
+    // Format EuropNet : "5 9999 Thaliane" (index niveau pseudo)
+  const mA = msg.match(/^\d+\s+(\d+)\s+(\S+)$/);
+    if (mA && mA[2].toLowerCase() === nick.toLowerCase()) {
+      pendingAccessChecks.delete(key); resolve(parseInt(mA[1]) >= CONFIG.founderLevel); return;
     }
-    const mN = msg.match(/^(\S+)\s+(does not have|has no)\s+access/i);
+    // Réponse négative : pas d'entrée trouvée
+    const mN = msg.match(/^(\S+)\s+(does not have|has no|n'a pas)\s+access/i);
     if (mN && mN[1].toLowerCase() === nick.toLowerCase()) {
       pendingAccessChecks.delete(key); resolve(false); return;
     }
