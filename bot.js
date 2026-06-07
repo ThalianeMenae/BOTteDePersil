@@ -50,16 +50,26 @@ function defaultData() {
   return { defi: null, historique: [], photosUrl: null };
 }
 
-// ─── Vérification founder via ChanServ ────────────────────────────────────────
+// ─── Vérification founder via ChanServ ACCESS LIST ───────────────────────────
+// Format EuropNet :
+//   "Numéro  Niveau  Masque"  (en-tête)
+//   "5        9999    Thaliane"
+//   "6        500     Coquelicot"
+//   "Fin de la liste d'accès."
 const pendingAccessChecks = new Map();
 
 function checkFounder(client, nick, channel) {
   return new Promise((resolve) => {
-    const key = `${nick}|${channel}|${Date.now()}`;
-    pendingAccessChecks.set(key, { resolve, nick, channel });
-    client.say('ChanServ', `ACCESS ${channel} ${nick}`);
+    const key = `${channel}|${Date.now()}`;
+    pendingAccessChecks.set(key, { resolve, nick, channel, done: false });
+    // Demander la liste complète
+    client.say('ChanServ', `ACCESS ${channel} LIST`);
+    // Timeout de sécurité : 5 secondes
     setTimeout(() => {
-      if (pendingAccessChecks.has(key)) { pendingAccessChecks.delete(key); resolve(false); }
+      if (pendingAccessChecks.has(key) && !pendingAccessChecks.get(key).done) {
+        pendingAccessChecks.delete(key);
+        resolve(false);
+      }
     }, 5000);
   });
 }
@@ -422,16 +432,28 @@ client.on('registered', () => {
 client.on('notice', (event) => {
   const msg = event.message;
   for (const [key, entry] of pendingAccessChecks.entries()) {
-    const { resolve, nick, channel } = entry;
-    // Format EuropNet : "5 9999 Thaliane" (index niveau pseudo)
-  const mA = msg.match(/^\d+\s+(\d+)\s+(\S+)$/);
-    if (mA && mA[2].toLowerCase() === nick.toLowerCase()) {
-      pendingAccessChecks.delete(key); resolve(parseInt(mA[1]) >= CONFIG.founderLevel); return;
+    const { resolve, nick } = entry;
+
+    // Ligne d'entrée : "5        9999    Thaliane"
+    const mA = msg.match(/^\d+\s+(\d+)\s+(\S+)$/);
+    if (mA) {
+      const level  = parseInt(mA[1]);
+      const pseudo = mA[2];
+      // Pseudo trouvé avec niveau suffisant → autoriser immédiatement
+      if (pseudo.toLowerCase() === nick.toLowerCase() && level >= CONFIG.founderLevel) {
+        entry.done = true;
+        pendingAccessChecks.delete(key);
+        resolve(true);
+        return;
+      }
     }
-    // Réponse négative : pas d'entrée trouvée
-    const mN = msg.match(/^(\S+)\s+(does not have|has no|n'a pas)\s+access/i);
-    if (mN && mN[1].toLowerCase() === nick.toLowerCase()) {
-      pendingAccessChecks.delete(key); resolve(false); return;
+
+    // Fin de la liste → pseudo non trouvé ou niveau insuffisant
+    if (msg.includes('Fin de la liste')) {
+      entry.done = true;
+      pendingAccessChecks.delete(key);
+      resolve(false);
+      return;
     }
   }
 });
